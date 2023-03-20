@@ -1,0 +1,15 @@
+spring:
+  redis:
+    host: 127.0.0.1
+    password:
+    database: 0
+    lettuce:
+      pool:
+        min-idle: 0
+        max-wait: -1
+        max-idle: 8
+        max-active: 8
+
+wx:
+  appId: aaaa
+  secret: bbbb
