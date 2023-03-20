@@ -42,7 +42,7 @@ public class WxServiceImpl implements WxService {
     } else {
       map.put("action_name", "QR_LIMIT_STR_SCENE");
     }
-    String token = redisTemplate.opsForValue().get(WxUtil.wx_token_key);
+    String token = redisTemplate.opsForValue().get(WxUtil.WX_TOKEN_KEY);
     if (StrUtil.isBlank(token)) {
       token = wxUtil.getWxStableToken();
     }

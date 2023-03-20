@@ -33,7 +33,7 @@ public class WxUtil {
 
   private final RedisTemplate<String, Object> redisTemplate;
 
-  public final static String wx_token_key = "wx:token";
+  public final static String WX_TOKEN_KEY = "wx:token";
 
   @Value("${wx.appId}")
   private String addId;
@@ -41,45 +41,26 @@ public class WxUtil {
   @Value("${wx.secret}")
   private String secret;
 
+  /*获取微信公众号Token*/
   private final String GET_WX_ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token";
-
+  /*获取微信公众号Token*/
   private final String GET_WX_STABLE_ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/stable_token";
 
-
+  /*创建二维码*/
   private final String GET_WX_QRCODE_TICKET_URL = "https://api.weixin.qq.com/cgi-bin/qrcode/create";
 
-
+  /*换取二维码*/
   private final String GET_WX_QRCODE_URL = "https://mp.weixin.qq.com/cgi-bin/showqrcode";
-
 
   /**
    * 获取微信公众号token
    */
   public String getWxToken() {
-    HttpHeaders headers = new HttpHeaders();
     String getTokenUrl =
         GET_WX_ACCESS_TOKEN_URL + "?grant_type=client_credential&appid=" + addId + "&secret="
             + secret;
-    HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(headers);
-    ResponseEntity<String> response = restTemplate.postForEntity(getTokenUrl,
-        request,
-        String.class);
-    log.info("请求微信获取token返回值为:{{}}", response.getBody());
-    if (response.getStatusCode().value() == HttpStatus.OK.value()) {
-      if (StrUtil.isBlank(response.getBody())) {
-        throw new CustomException("token信返回值为空");
-      }
-      JSONObject jsonObject = JSONObject.parseObject(response.getBody());
-      String token = jsonObject.getString("access_token");
-      if (StrUtil.isBlank(token)) {
-        throw new CustomException("请求微信token异常");
-      } else {
-        long expireTime = jsonObject.getLong("expires_in");
-        redisTemplate.opsForValue().set(wx_token_key, token, Duration.ofSeconds(expireTime));
-      }
-      return token;
-    }
-    throw new CustomException("请求微信获取token接口异常");
+    ResponseEntity<String> response = restTemplate.getForEntity(getTokenUrl, String.class);
+    return parseRequestToken(response);
   }
 
   /**
@@ -95,8 +76,11 @@ public class WxUtil {
     map.put("secret", secret);
     HttpEntity<HashMap<String, Object>> request = new HttpEntity<>(map, headers);
     ResponseEntity<String> response = restTemplate.postForEntity(GET_WX_STABLE_ACCESS_TOKEN_URL,
-        request,
-        String.class);
+        request, String.class);
+    return parseRequestToken(response);
+  }
+
+  private String parseRequestToken(ResponseEntity<String> response) {
     log.info("请求微信获取token返回值为:{{}}", response.getBody());
     if (response.getStatusCode().value() == HttpStatus.OK.value()) {
       if (StrUtil.isBlank(response.getBody())) {
@@ -108,7 +92,7 @@ public class WxUtil {
         throw new CustomException("请求微信token异常");
       } else {
         long expireTime = jsonObject.getLong("expires_in");
-        redisTemplate.opsForValue().set(wx_token_key, token, Duration.ofSeconds(expireTime));
+        redisTemplate.opsForValue().set(WX_TOKEN_KEY, token, Duration.ofSeconds(expireTime));
       }
       return token;
     }
@@ -125,8 +109,7 @@ public class WxUtil {
     HttpEntity<HashMap<String, Object>> request = new HttpEntity<>(map, headers);
     ResponseEntity<String> response = restTemplate.postForEntity(
         GET_WX_QRCODE_TICKET_URL + "?access_token=" + token,
-        request,
-        String.class);
+        request, String.class);
     log.info("请求微信二维码返回值为:{{}}", response.getBody());
     if (response.getStatusCode().value() == HttpStatus.OK.value()) {
       if (StrUtil.isBlank(response.getBody())) {

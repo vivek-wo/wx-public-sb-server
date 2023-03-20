@@ -1,10 +1,8 @@
 package com.wei.wx.sb.controller;
 
-import com.alibaba.fastjson.JSONObject;
-import java.io.FileInputStream;
+import com.wei.wx.sb.api.WxApi;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,10 +28,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/wx")
 @RequiredArgsConstructor
-public class WxController {
+public class WxController implements WxApi {
 
   /**
-   * 获取微信用户的openId
+   * 回调-获取用户的OpenId
    */
   @PostMapping("/getOpenId")
   public void getOpenId(HttpServletRequest request)
@@ -58,12 +56,11 @@ public class WxController {
   /**
    * 生成二维码链接
    *
-   * @param scene_id 二维码参数
+   * @param scene_id  二维码参数
    * @param permanent 是否永久链接 1-永久 0:临时
    */
-  @GetMapping("/getQrCode")
-  public void getQrCode(@RequestParam("scene_id") String scene_id,
-      @RequestParam("permanent") Integer permanent) {
+  @Override
+  public void getQrCode(String scene_id, Integer permanent) {
 
   }
 
