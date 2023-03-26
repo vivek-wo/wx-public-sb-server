@@ -2,21 +2,21 @@ package com.wei.wx.sb.util;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.wei.wx.sb.dto.TicketDTO;
 import com.wei.wx.sb.exception.CustomException;
-import java.time.Duration;
-import java.util.HashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -84,7 +84,7 @@ public class WxUtil {
     log.info("请求微信获取token返回值为:{{}}", response.getBody());
     if (response.getStatusCode().value() == HttpStatus.OK.value()) {
       if (StrUtil.isBlank(response.getBody())) {
-        throw new CustomException("token信返回值为空");
+        throw new CustomException("token返回值为空");
       }
       JSONObject jsonObject = JSONObject.parseObject(response.getBody());
       String token = jsonObject.getString("access_token");
@@ -92,7 +92,7 @@ public class WxUtil {
         throw new CustomException("请求微信token异常");
       } else {
         long expireTime = jsonObject.getLong("expires_in");
-        redisTemplate.opsForValue().set(WX_TOKEN_KEY, token, Duration.ofSeconds(expireTime));
+//        redisTemplate.opsForValue().set(WX_TOKEN_KEY, token, Duration.ofSeconds(expireTime));
       }
       return token;
     }
@@ -102,29 +102,44 @@ public class WxUtil {
   /**
    * 获取公众号的ticket
    */
-  public String getQrCode(String token, HashMap<String, Object> map) {
+  public TicketDTO getQrCodeTicket(String token, Map<String, Object> map) {
     HttpHeaders headers = new HttpHeaders();
     MediaType type = MediaType.parseMediaType("application/json;charset=UTF-8");
     headers.setContentType(type);
-    HttpEntity<HashMap<String, Object>> request = new HttpEntity<>(map, headers);
-    ResponseEntity<String> response = restTemplate.postForEntity(
-        GET_WX_QRCODE_TICKET_URL + "?access_token=" + token,
-        request, String.class);
+//    String json = JSONObject.toJSONString(map);
+//    log.info("请求Ticket JSON {}", json);
+    HttpEntity<Map<String, Object>> request = new HttpEntity<>(map, headers);
+    ResponseEntity<TicketDTO> response = restTemplate.postForEntity(
+            GET_WX_QRCODE_TICKET_URL + "?access_token=" + token,
+            request, TicketDTO.class);
     log.info("请求微信二维码返回值为:{{}}", response.getBody());
     if (response.getStatusCode().value() == HttpStatus.OK.value()) {
-      if (StrUtil.isBlank(response.getBody())) {
-        throw new CustomException("请求微信二维码链接返回值为空");
+      if (response.getBody() == null) {
+        throw new CustomException("获取公众号Ticket失败");
       }
       return response.getBody();
     }
-    throw new CustomException("请求微信获取token接口异常");
+    throw new CustomException("请求微信Ticket异常");
   }
 
   /**
    * 通过ticket换取二维码
+   *
+   * @param ticket
+   * @return 返回二维码图片Base64
    */
-  public void getQrCode(String ticket) {
-
+  public String getQrCodeByTicket(String ticket) {
+    String getQrCodeUrl;
+    try {
+      getQrCodeUrl = GET_WX_QRCODE_URL + "?ticket=" + URLEncoder.encode(ticket, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      throw new CustomException("获取二维码失败，ENCODE 失败");
+    }
+    ResponseEntity<byte[]> response = restTemplate.getForEntity(getQrCodeUrl, byte[].class);
+    if (response.getStatusCode().value() == HttpStatus.OK.value()) {
+      return Base64.getEncoder().encodeToString(response.getBody());
+    }
+    throw new CustomException("获取二维码失败异常");
   }
-
 }

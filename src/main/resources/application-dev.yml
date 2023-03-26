@@ -11,5 +11,5 @@ spring:
         max-active: 8
 
 wx:
-  appId: aaaa
-  secret: bbbb
+  appId: wxa1458a7091a64917
+  secret: ca2547b61893a017975031d6627ff7e0

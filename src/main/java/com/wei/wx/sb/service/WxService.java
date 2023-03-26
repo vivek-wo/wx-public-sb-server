@@ -8,5 +8,11 @@ package com.wei.wx.sb.service;
 public interface WxService {
 
 
-  void gerQrCode(String scene_id, Integer permanent);
+  /**
+   * 获取二维码
+   *
+   * @param scene_str
+   * @param permanent
+   */
+  String gerQrCode(String scene_str, Integer permanent);
 }

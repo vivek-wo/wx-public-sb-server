@@ -1,23 +1,24 @@
 package com.wei.wx.sb.controller;
 
 import com.wei.wx.sb.api.WxApi;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
+import com.wei.wx.sb.service.WxService;
+import com.wei.wx.sb.vo.ResultVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author kaolvkaolv
@@ -30,12 +31,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class WxController implements WxApi {
 
+  private final WxService wxService;
+
   /**
    * 回调-获取用户的OpenId
    */
   @PostMapping("/getOpenId")
   public void getOpenId(HttpServletRequest request)
-      throws IOException, DocumentException {
+          throws IOException, DocumentException {
     Map<String, String> map = new HashMap<>(16);
     SAXReader saxReader = new SAXReader();
     Document read = saxReader.read(request.getInputStream());
@@ -54,32 +57,15 @@ public class WxController implements WxApi {
   }
 
   /**
-   * 生成二维码链接
+   * 生成二维码图片
    *
-   * @param scene_id  二维码参数
+   * @param scene_str 二维码参数
    * @param permanent 是否永久链接 1-永久 0:临时
    */
   @Override
-  public void getQrCode(String scene_id, Integer permanent) {
-
+  public ResponseEntity<ResultVO<String>> getQrCode(String scene_str, Integer permanent) {
+    String qrCodeBase64Image = wxService.gerQrCode(scene_str, permanent);
+    return ResponseEntity.ok().body(ResultVO.success(qrCodeBase64Image));
   }
 
-  public static void main(String[] args) throws FileNotFoundException, DocumentException {
-//    InputStream inputStream = new FileInputStream("d:/jar/1.xml");
-//    Map<String, String> map = new HashMap<>(16);
-//    SAXReader saxReader = new SAXReader();
-//    Document read = saxReader.read(inputStream);
-//    Element rootElement = read.getRootElement();
-//    List<Element> elements = rootElement.elements();
-//    for (Element e : elements) {
-//      map.put(e.getName(), e.getStringValue());
-//    }
-//    System.out.println(map);
-
-//    JSONObject jsonObject = new JSONObject();
-//    JSONObject jsonObject1 = new JSONObject();
-//    jsonObject1.put("scene_id", 123);
-//    jsonObject.put("scene", jsonObject1.toJSONString());
-//    System.out.println(jsonObject.toJSONString());
-  }
 }
